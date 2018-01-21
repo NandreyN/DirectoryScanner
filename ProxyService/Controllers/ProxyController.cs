@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 
 namespace ProxyService.Controllers
 {
+   
+
     [AllowAnonymous]
     [Route("api/[controller]")]
     public class ProxyController : Controller
@@ -18,12 +20,15 @@ namespace ProxyService.Controllers
         private Queue<PoolItem> _poolAddresses;
         private IList<PoolItem> _busyServices;
         private PoolItemContext _poolContext;
-        private readonly ILogger _logger;
+        public sealed class RequestData
+        {
+            public IEnumerable<string> List { get; set; }
+        }
 
-        public ProxyController(IConfiguration config, PoolItemContext context, ILogger log)
+
+        public ProxyController(IConfiguration config, PoolItemContext context)
         {
             _poolContext = context;
-            _logger = log;
 
             _poolAddresses = new Queue<PoolItem>();
             _busyServices = new List<PoolItem>();
@@ -37,14 +42,18 @@ namespace ProxyService.Controllers
             }
         }
 
-        [HttpPost]
-        public void Post([FromBody]string value)
+        [HttpPost("Entry")]
+        public IActionResult Entry([FromBody]RequestData value)
         {
             ///<summary>
             ///An entry point of the request life-cycle.
             ///There should be logic of splitting requested folders between services in the pool
             ///Generate token for each request and register it in Task DataBase
             ///</summary>
+
+            IEnumerable<string> requestedFodlers = value.List;
+            Console.WriteLine("");
+            return Ok();
         }
 
         [HttpGet("Ping")]

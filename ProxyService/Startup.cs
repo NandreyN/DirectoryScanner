@@ -25,13 +25,14 @@ namespace ProxyService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
             services.AddSingleton(Configuration);
 
-            string connectionString = Configuration.GetConnectionString("Pool") ?? throw new ArgumentNullException("Invalid connection string block");
-            services.AddDbContext<PoolItemContext>(x => x.UseSqlServer(connectionString));
-            connectionString = Configuration.GetConnectionString("Tasks") ?? throw new ArgumentNullException("Invalid connection string block");
-            services.AddDbContext<TaskItemContext>(x => x.UseSqlServer(connectionString));
+           
+            services.AddDbContext<PoolItemContext>(x => x.UseSqlServer(Configuration.GetConnectionString("Pool")));
+            //connectionString = Configuration.GetConnectionString("Tasks") ?? throw new ArgumentNullException("Invalid connection string block");
+            services.AddDbContext<TaskItemContext>(x => x.UseSqlServer(Configuration.GetConnectionString("Tasks")));
+
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

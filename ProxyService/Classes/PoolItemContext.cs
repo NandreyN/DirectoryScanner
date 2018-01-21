@@ -12,6 +12,9 @@ namespace ProxyService.Classes
 
         public DbSet<PoolItem> PoolItems { get; set; }
 
-        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<PoolItem>().ToTable("Addresses");
+        }
     }
 }

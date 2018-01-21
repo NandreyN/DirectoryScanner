@@ -20,7 +20,7 @@ namespace ProxyService.Classes
         public JWTTokenProvider(TaskItemContext context, IConfiguration config)
         {
             _taskContext = context;
-            _appSettingsSection = config.GetSection("AppSettings:Key") ?? throw new ArgumentNullException("Invalid AppSettings Section");
+            _appSettingsSection = config.GetSection("AppSettings:Id") ?? throw new ArgumentNullException("Invalid AppSettings Section");
         }
 
         public async Task<(string, bool)> RegisterTokenAsync()
