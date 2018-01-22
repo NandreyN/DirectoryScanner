@@ -7,16 +7,12 @@ using System.Threading.Tasks;
 
 namespace ProxyService.Classes
 {
-    [Table("TaskTable")]
+    [Table("Tasks")]
     public class TaskItem
     {
-        [Column("Id")]
         public int Id { get; set; }
-        [Column("Token")]
         public string Token { get; set; }
-        [Column("IsFinished")]
         public bool IsFinished { get; set; }
-        [Column("IsSuccess")]
         public bool IsSuccess { get; set; }
     }
 }

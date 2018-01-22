@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,15 +8,13 @@ using System.Threading.Tasks;
 
 namespace ProxyService.Classes
 {
-    public class PoolItemContext:DbContext
+    public class PoolItemContext : DbContext
     {
-        public PoolItemContext(DbContextOptions<PoolItemContext> options) : base(options) { }
-
         public DbSet<PoolItem> PoolItems { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public PoolItemContext(DbContextOptions<PoolItemContext> options)
+            : base(options)
         {
-            modelBuilder.Entity<PoolItem>().ToTable("Addresses");
         }
     }
 }

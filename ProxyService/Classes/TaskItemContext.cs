@@ -11,13 +11,9 @@ namespace ProxyService.Classes
     {
         public DbSet<TaskItem> Tasks { get; set; }
 
-        public TaskItemContext(DbContextOptions options) : base(options)
+        public TaskItemContext(DbContextOptions<TaskItemContext> options)
+            : base(options)
         {
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<TaskItem>().ToTable("TaskTable");
         }
     }
 }

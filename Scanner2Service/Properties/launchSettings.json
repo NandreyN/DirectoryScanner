@@ -2,31 +2,28 @@
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
-    "iis": {
-      "applicationUrl": "http://localhost/ProxyService",
-      "sslPort": 0
-    },
     "iisExpress": {
-      "applicationUrl": "http://localhost:64335/",
+      "applicationUrl": "http://localhost:53097/",
       "sslPort": 0
     }
   },
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchUrl": "api/ping",
+      "launchBrowser": true,
+      "launchUrl": "api/values",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "ProxyService": {
+    "Scanner2Service": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/ping",
+      "launchUrl": "api/values",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:64336/"
+      "applicationUrl": "http://localhost:53098/"
     }
   }
 }

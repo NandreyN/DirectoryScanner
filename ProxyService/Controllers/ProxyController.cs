@@ -18,9 +18,9 @@ namespace ProxyService.Controllers
     public class ProxyController : Controller
     {
         private Queue<PoolItem> _poolAddresses;
-        private IList<PoolItem> _busyServices;
         private PoolItemContext _poolContext;
-        public sealed class RequestData
+
+        public sealed class EntryProxyData
         {
             public IEnumerable<string> List { get; set; }
         }
@@ -29,21 +29,13 @@ namespace ProxyService.Controllers
         public ProxyController(IConfiguration config, PoolItemContext context)
         {
             _poolContext = context;
-
             _poolAddresses = new Queue<PoolItem>();
-            _busyServices = new List<PoolItem>();
-
             foreach (var item in _poolContext.PoolItems)
-            {
-                if (item.IsBusy)
-                    _busyServices.Add(item);
-                else
-                    _poolAddresses.Enqueue(item);
-            }
+                _poolAddresses.Enqueue(item);
         }
 
         [HttpPost("Entry")]
-        public IActionResult Entry([FromBody]RequestData value)
+        public IActionResult Entry([FromBody]EntryProxyData value)
         {
             ///<summary>
             ///An entry point of the request life-cycle.
@@ -51,8 +43,7 @@ namespace ProxyService.Controllers
             ///Generate token for each request and register it in Task DataBase
             ///</summary>
 
-            IEnumerable<string> requestedFodlers = value.List;
-            Console.WriteLine("");
+            IEnumerable<string> requestedFolders = value.List;
             return Ok();
         }
 
