@@ -10,9 +10,14 @@ namespace ProxyService.Classes
     [Table("Tasks")]
     public class TaskItem
     {
-        public int Id { get; set; }
+        [Key]
+        [Column("Token")]
         public string Token { get; set; }
-        public bool IsFinished { get; set; }
-        public bool IsSuccess { get; set; }
+        [Column("IsReady")]
+        public bool IsReady { get; set; }
+        [Column("Status")]
+        public int Status { get; set; }
+        [Column("WasStopped")]
+        public bool WasStopped { get; set; }
     }
 }

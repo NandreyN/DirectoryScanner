@@ -20,7 +20,7 @@ namespace ProxyService.Classes
         public JWTTokenProvider(TaskItemContext context, IConfiguration config)
         {
             _taskContext = context;
-            _appSettingsSection = config.GetSection("AppSettings:Id") ?? throw new ArgumentNullException("Invalid AppSettings Section");
+            _appSettingsSection = config.GetSection("AppSettings:Key") ?? throw new ArgumentNullException("Invalid AppSettings Section");
         }
 
         public async Task<(string, bool)> RegisterTokenAsync()
@@ -32,9 +32,11 @@ namespace ProxyService.Classes
                 string val = _appSettingsSection.Value;
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(val));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                DateTime expiry = DateTime.Now.AddDays(7);
                 var token = new JwtSecurityToken("me",
                     "you",
                     null,
+                    expires:expiry,
                     signingCredentials: creds);
 
                 newTokenStringFormat = new JwtSecurityTokenHandler().WriteToken(token);
@@ -44,11 +46,10 @@ namespace ProxyService.Classes
                 return (string.Empty, false);
             }
 
-            if (_taskContext.Tasks != null)
+            if (_taskContext.Tasks == null)
                 throw new ArgumentNullException("TeskContext is null");
 
-            int newTknIndex = (_taskContext.Tasks.Any()) ? _taskContext.Tasks.Max(x => x.Id) : 0;
-            _taskContext.Add(new TaskItem() { Id = newTknIndex, IsFinished = false, IsSuccess = true,Token = newTokenStringFormat});
+            _taskContext.Add(new TaskItem() { Token = newTokenStringFormat, IsReady = false, Status = 0, WasStopped = false });
             await _taskContext.SaveChangesAsync();
 
             return (newTokenStringFormat, true);

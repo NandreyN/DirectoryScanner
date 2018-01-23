@@ -20,6 +20,16 @@ namespace ProxyService.Classes
             AbsoluteName = dirInfo.FullName;
         }
 
+        public LocalFolder(DirectoryInfo dirInfo)
+        {
+            if (!dirInfo.Exists)
+                throw new FileNotFoundException($"Folder {dirInfo.FullName} not found");
+
+            Id = TotalCount++;
+            LocalName = dirInfo.Name;
+            AbsoluteName = dirInfo.FullName;
+        }
+
         private static int TotalCount = 0;
 
         public int Id { get; private set; }
