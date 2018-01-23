@@ -11,8 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ProxyService.Controllers
 {
-   
-
     [AllowAnonymous]
     [Route("api/[controller]")]
     public class ProxyController : Controller
