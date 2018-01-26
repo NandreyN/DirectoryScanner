@@ -18,6 +18,7 @@ namespace ProxyService.Classes
                 dirs.Add(new LocalFolder(a));
             }
             return dirs;
+            //return Directory.GetDirectories(fldr.AbsoluteName, "*", SearchOption.AllDirectories).ToList<string>().ConvertAll(x => new LocalFolder(x));
         }
     }
 }

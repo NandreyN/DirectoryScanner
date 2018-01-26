@@ -11,6 +11,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Transactions;
 using ProxyService.Interfaces;
+using System.Data.SqlClient;
+using System.Data;
+using System.Net;
 
 namespace ProxyService.Controllers
 {
@@ -54,15 +57,23 @@ namespace ProxyService.Controllers
                 throw new Exception("Unsuccessful token creation");
 
             IEnumerable<string> requestedFolders = value.List;
-            string sqlCreateString = $"CREATE TABLE [{token}] ([Token] TEXT NOT NULL, CONSTRAINT[PK_Token] PRIMARY KEY([Token]))";
-            using (var connection = new SqliteConnection(_connectionString))
-            { 
-                await connection.OpenAsync();
-                SqliteCommand command = new SqliteCommand(sqlCreateString, connection);
-                await command.ExecuteNonQueryAsync();
-                connection.Close();
-            }
-            return Ok();
+            string sqlCreateString = $"CREATE TABLE [{token}] ([Folder] TEXT NOT NULL, CONSTRAINT[PK_Folder] PRIMARY KEY([Folder]))";
+            bool creationResult = await SqliteUtilities.ExecuteCommandAsync(_connectionString, sqlCreateString);
+            if (!creationResult)
+                return StatusCode(500);
+
+            /*SqliteCommand comm = new SqliteCommand("SELECT * FROM sqlite_master WHERE type = 'table'", connection);
+            SqliteDataReader reader = comm.ExecuteReader();
+
+            // Step through each row
+            while (reader.Read())
+            {
+                string name = reader[1].ToString();
+            }*/
+            LocalFolderScanner scanner = new LocalFolderScanner(((List<string>)requestedFolders).ConvertAll(x => new LocalFolder(x)));
+            scanner.CreateFolderStructure();
+            bool writeResult = await scanner.WriteToTableAsync(_connectionString, token);
+            return writeResult? Ok() : StatusCode(500);
         }
 
         [HttpGet("Ping")]
