@@ -14,6 +14,9 @@ using ProxyService.Interfaces;
 using System.Data.SqlClient;
 using System.Data;
 using System.Net;
+using Newtonsoft.Json;
+using Hangfire;
+using FluentScheduler;
 
 namespace ProxyService.Controllers
 {
@@ -30,6 +33,10 @@ namespace ProxyService.Controllers
         public sealed class EntryProxyData
         {
             public IEnumerable<string> List { get; set; }
+            public override string ToString()
+            {
+                return JsonConvert.SerializeObject(List);
+            }
         }
 
 
@@ -52,7 +59,7 @@ namespace ProxyService.Controllers
             ///There should be logic of splitting requested folders between services in the pool
             ///Generate token for each request and register it in Task DataBase
             ///</summary>
-            (string token, bool isSuccess) = await _tokenProvider.RegisterTokenAsync();
+            (string token, bool isSuccess) = await _tokenProvider.RegisterTokenAsync(value.ToString());
             if (!isSuccess)
                 throw new Exception("Unsuccessful token creation");
 
@@ -73,7 +80,14 @@ namespace ProxyService.Controllers
             LocalFolderScanner scanner = new LocalFolderScanner(((List<string>)requestedFolders).ConvertAll(x => new LocalFolder(x)));
             scanner.CreateFolderStructure();
             bool writeResult = await scanner.WriteToTableAsync(_connectionString, token);
-            return writeResult? Ok() : StatusCode(500);
+
+            IRecoveryManager recoveryManager = new SqliteRecoveryManager(_taskContext);
+            // Launch background job here
+
+            var dist = new BackgroundDistributor();
+
+            return writeResult && recoveryManager.SetProperty(PropertySelector.FolderStructureCreated, token, true) ?
+                Ok() : StatusCode(500);
         }
 
         [HttpGet("Ping")]

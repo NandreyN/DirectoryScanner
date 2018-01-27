@@ -7,7 +7,7 @@ namespace ProxyService.Interfaces
 {
     interface ITokenProvider
     {
-        Task<(string, bool)> RegisterTokenAsync();
+        Task<(string, bool)> RegisterTokenAsync(string requestedFolders);
         Task<bool> UnregisterToken(string token); 
     }
 }

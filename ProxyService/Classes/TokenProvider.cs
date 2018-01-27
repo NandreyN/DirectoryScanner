@@ -23,7 +23,7 @@ namespace ProxyService.Classes
             _appSettingsSection = config.GetSection("AppSettings:Key") ?? throw new ArgumentNullException("Invalid AppSettings Section");
         }
 
-        public async Task<(string, bool)> RegisterTokenAsync()
+        public async Task<(string, bool)> RegisterTokenAsync(string requestedFolders)
         {
             string newTokenStringFormat = string.Empty;
 
@@ -49,7 +49,8 @@ namespace ProxyService.Classes
             if (_taskContext.Tasks == null)
                 throw new ArgumentNullException("TeskContext is null");
 
-            _taskContext.Add(new TaskItem() { Token = newTokenStringFormat, IsReady = false, Status = 0, WasStopped = false });
+            _taskContext.Add(new TaskItem() { Token = newTokenStringFormat, IsReady = false, Status = 0,
+                WasStopped = false, FolderStructureCreated = false, RequestedFolders = requestedFolders});
             await _taskContext.SaveChangesAsync();
 
             return (newTokenStringFormat, true);

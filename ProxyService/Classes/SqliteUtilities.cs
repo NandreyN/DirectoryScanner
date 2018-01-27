@@ -20,9 +20,7 @@ namespace ProxyService.Classes
                 try
                 {
                     await connection.OpenAsync();
-                    SqliteCommand command = new SqliteCommand();
-                    command.CommandText = strCommand;
-                    command.Connection = connection;
+                    SqliteCommand command = new SqliteCommand(strCommand, connection);
                     await command.ExecuteNonQueryAsync();
                 }
                 catch (Exception e)

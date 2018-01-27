@@ -19,5 +19,9 @@ namespace ProxyService.Classes
         public int Status { get; set; }
         [Column("WasStopped")]
         public bool WasStopped { get; set; }
+        [Column("FolderStructureCreated")]
+        public bool FolderStructureCreated { get; set; }
+        [Column("RequestedFolders")]
+        public string RequestedFolders { get; set; }
     }
 }
