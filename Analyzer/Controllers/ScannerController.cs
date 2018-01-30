@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Analyzer.Controllers
 {
     [Route("api/[controller]")]
-    public class ProxyController : Controller
+    public class ScannerController : Controller
     {
        
     }
