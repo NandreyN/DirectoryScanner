@@ -28,7 +28,7 @@ namespace ProxyService.Controllers
         private PoolItemContext _poolContext;
         private TaskItemContext _taskContext;
         private ITokenProvider _tokenProvider;
-        private readonly string _connectionString;
+        private FolderRecordContext _folderContext;
 
         public sealed class EntryProxyData
         {
@@ -39,52 +39,40 @@ namespace ProxyService.Controllers
             }
         }
 
-
-        public ProxyController(IConfiguration config, PoolItemContext context, TaskItemContext taskContext)
+        public ProxyController(IConfiguration config, PoolItemContext context, TaskItemContext taskContext, FolderRecordContext folderContext)
         {
             _poolContext = context;
             _taskContext = taskContext;
             _tokenProvider = new JWTTokenProvider(_taskContext, config);
-            _connectionString = config.GetConnectionString("Default");
+            _folderContext = folderContext;
             _poolAddresses = new Queue<PoolItem>();
             foreach (var item in _poolContext.PoolItems)
                 _poolAddresses.Enqueue(item);
         }
 
+        ///<summary>
+        ///An entry point of the request life-cycle.
+        ///There should be logic of splitting requested folders between services in the pool
+        ///Generates token for each request and registers it in Task DataBase
+        ///</summary>
         [HttpPost("Entry")]
         public async Task<IActionResult> EntryAsync([FromBody]EntryProxyData value)
         {
-            ///<summary>
-            ///An entry point of the request life-cycle.
-            ///There should be logic of splitting requested folders between services in the pool
-            ///Generate token for each request and register it in Task DataBase
-            ///</summary>
             (string token, bool isSuccess) = await _tokenProvider.RegisterTokenAsync(value.ToString());
             if (!isSuccess)
                 throw new Exception("Unsuccessful token creation");
 
             IEnumerable<string> requestedFolders = value.List;
-            string sqlCreateString = $"CREATE TABLE [{token}] ([Folder] TEXT NOT NULL, CONSTRAINT[PK_Folder] PRIMARY KEY([Folder]))";
-            bool creationResult = await SqliteUtilities.ExecuteCommandAsync(_connectionString, sqlCreateString);
-            if (!creationResult)
-                return StatusCode(500);
 
-            /*SqliteCommand comm = new SqliteCommand("SELECT * FROM sqlite_master WHERE type = 'table'", connection);
-            SqliteDataReader reader = comm.ExecuteReader();
-
-            // Step through each row
-            while (reader.Read())
-            {
-                string name = reader[1].ToString();
-            }*/
             LocalFolderScanner scanner = new LocalFolderScanner(((List<string>)requestedFolders).ConvertAll(x => new LocalFolder(x)));
             scanner.CreateFolderStructure();
-            bool writeResult = await scanner.WriteToTableAsync(_connectionString, token);
+            bool writeResult = await scanner.WriteToTableAsync(_folderContext,token);
+            if (!writeResult)
+                return StatusCode(500, new { message = "Unhandled exception during processing. Try again later." });
 
             IRecoveryManager recoveryManager = new SqliteRecoveryManager(_taskContext);
-            // Launch background job here
-
-            var dist = new BackgroundDistributor();
+            
+            var dist = new BackgroundDistributor(_poolContext,_folderContext);
 
             return writeResult && recoveryManager.SetProperty(PropertySelector.FolderStructureCreated, token, true) ?
                 Ok() : StatusCode(500);

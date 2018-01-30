@@ -34,5 +34,28 @@ namespace ProxyService.Classes
             }
             return true;
         }
+
+        public static async Task<bool?> IsTableEmpty(string connectionString, string tableName)
+        {
+            using (SqliteConnection connection = new SqliteConnection(connectionString))
+            {
+                bool? isEmpty = null;
+
+                try
+                {
+                    await connection.OpenAsync();
+                    SqliteCommand cmd = new SqliteCommand($"SELECT Count(*) FROM [{tableName}]",connection);
+                    int count = Convert.ToInt32(cmd.ExecuteScalar());
+                    isEmpty = (count == 0) ? true : false;
+                    connection.Close();
+                }
+                catch (Exception e)
+                {
+                    connection.Close();
+                    return null;
+                }
+                return isEmpty.HasValue && isEmpty.Value;
+            }
+        }
     }
 }

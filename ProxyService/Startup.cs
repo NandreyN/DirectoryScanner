@@ -42,9 +42,8 @@ namespace ProxyService
             //services.AddHangfire(x => x.UseSQLiteStorage(Configuration.GetConnectionString("Hangfire")));
             services.AddDbContext<PoolItemContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
             services.AddDbContext<TaskItemContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
-            services.AddDbContext<QueryItemContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
-
-           
+            services.AddDbContext<FolderRecordContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
+            FolderRecordContext.ConnectionString = Configuration.GetConnectionString("Default");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

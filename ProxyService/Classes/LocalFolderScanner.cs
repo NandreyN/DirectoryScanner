@@ -8,6 +8,9 @@ using ProxyService.Interfaces;
 
 namespace ProxyService.Classes
 {
+    /// <summary>
+    /// This class is responsible for creating subfolder list and writing it to the external storage
+    /// </summary>
     public class LocalFolderScanner : DefaultFolderScanner
     {
         private Queue<IFolder> _queue;
@@ -20,6 +23,11 @@ namespace ProxyService.Classes
             CreateFolderStructure();
         }
 
+        /// <summary>
+        /// Bypasses subfolders using queue
+        /// Pops directory , gets list of subdirectories and adds it to the queue
+        /// Repeat until queue is empty
+        /// </summary>
         public void CreateFolderStructure()
         {
             Folders.Clear();
@@ -32,41 +40,40 @@ namespace ProxyService.Classes
             }
         }
 
-        public async Task<bool> WriteToTableAsync(string connectionString, string tableName)
+        /// <summary>
+        /// Using EF
+        /// </summary>
+        /// <param name="context">FolderRecordContext for storing folder structure</param>
+        /// <param name="token">Request identificator</param>
+        /// <returns>true if succes , false in case of exception</returns>
+        public async Task<bool> WriteToTableAsync(FolderRecordContext context, string token)
         {
-            using (SqliteConnection connection = new SqliteConnection(connectionString))
+            try
             {
-                await connection.OpenAsync();
-                using (SqliteCommand command = connection.CreateCommand())
+                context.ChangeTracker.AutoDetectChangesEnabled = false;
+                for (int i = 0; i < Folders.Count; i++)
                 {
-                    SqliteTransaction transaction = connection.BeginTransaction();
-                    try
+                    if (i % 100 == 0)
                     {
-                        command.Transaction = transaction;
-                        command.CommandText = $"INSERT INTO[{tableName}] (Folder) VALUES(@FolderTag)";
-                        command.Parameters.AddWithValue("@FolderTag", "");
-                        foreach (var folder in Folders.Values)
-                            await WriteOneItemAsync(command, folder);
-                        transaction.Commit();
+                        await context.SaveChangesAsync();
+                        context = new FolderRecordContext();
+                        context.ChangeTracker.AutoDetectChangesEnabled = false;
                     }
-                    catch (Exception e)
-                    {
-                        transaction.Rollback();
-                        return false;
-                    }
-                    finally
-                    {
-                        connection.Close();
-                    }
-                }
-            }
-            return true;
-        }
 
-        private async Task<int> WriteOneItemAsync(SqliteCommand command, IFolder folder)
-        {
-            command.Parameters["@FolderTag"].Value = folder.AbsoluteName;
-            return await command.ExecuteNonQueryAsync();
+                    IFolder fldr = Folders.Values.ElementAt(i);
+                    context.Folders.Add(new FolderRecord() { Path = fldr.AbsoluteName, Token = token, WasDelivered = false });
+                }
+                await context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            finally
+            {
+                context.ChangeTracker.AutoDetectChangesEnabled = true;
+            }
         }
     }
 }
