@@ -16,5 +16,7 @@ namespace ProxyService.Classes
         }
 
         public abstract void CreateFolderStructure(IFolder folder);
+
+        public abstract IEnumerable<IFile> GetFiles(IFolder folder);
     }
 }

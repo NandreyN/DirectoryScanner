@@ -9,7 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AccumulatorService", "Accum
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProxyService", "ProxyService\ProxyService.csproj", "{12C002D5-44D1-4D17-9AE2-516B3707EC4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scanner2Service", "Scanner2Service\Scanner2Service.csproj", "{87A60B88-2EEF-476C-9EA4-32BA4D58AC28}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scanner2Service", "Scanner2Service\Scanner2Service.csproj", "{87A60B88-2EEF-476C-9EA4-32BA4D58AC28}"
+	ProjectSection(ProjectDependencies) = postProject
+		{12C002D5-44D1-4D17-9AE2-516B3707EC4C} = {12C002D5-44D1-4D17-9AE2-516B3707EC4C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

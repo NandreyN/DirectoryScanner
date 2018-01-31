@@ -30,9 +30,18 @@ namespace ProxyService.Controllers
         private ITokenProvider _tokenProvider;
         private FolderRecordContext _folderContext;
 
-        public sealed class EntryProxyData
+        public class EntryProxyData
         {
+            public enum FolderType
+            {
+                Local,
+                GoogleDrive,
+                Dropbox
+            }
+
             public IEnumerable<string> List { get; set; }
+            public FolderType Type { get; set; }
+
             public override string ToString()
             {
                 return JsonConvert.SerializeObject(List);
@@ -66,13 +75,13 @@ namespace ProxyService.Controllers
 
             LocalFolderScanner scanner = new LocalFolderScanner(((List<string>)requestedFolders).ConvertAll(x => new LocalFolder(x)));
             scanner.CreateFolderStructure();
-            bool writeResult = await scanner.WriteToTableAsync(_folderContext,token);
+            bool writeResult = await scanner.WriteToTableAsync(_folderContext, token);
             if (!writeResult)
                 return StatusCode(500, new { message = "Unhandled exception during processing. Try again later." });
 
             IRecoveryManager recoveryManager = new SqliteRecoveryManager(_taskContext);
-            
-            var dist = new BackgroundDistributor(_poolContext,_folderContext);
+
+            var dist = new BackgroundDistributor(_poolContext, _folderContext);
 
             return writeResult && recoveryManager.SetProperty(PropertySelector.FolderStructureCreated, token, true) ?
                 Ok() : StatusCode(500);
