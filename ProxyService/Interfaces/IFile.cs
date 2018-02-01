@@ -10,6 +10,6 @@ namespace ProxyService.Interfaces
         string LocalName { get; }
         string AbsoluteName { get; }
         string Extension { get; }
-        double SizeBytes { get; }
+        long  SizeBytes { get; }
     }
 }

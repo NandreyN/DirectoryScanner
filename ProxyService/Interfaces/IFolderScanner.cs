@@ -8,5 +8,6 @@ namespace ProxyService.Interfaces
     public interface IFolderScanner
     {
         void CreateFolderStructure(IFolder folder);
+        IEnumerable<IFile> GetFiles(IFolder folder);
     }
 }

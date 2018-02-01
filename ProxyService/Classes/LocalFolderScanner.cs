@@ -33,11 +33,16 @@ namespace ProxyService.Classes
             Folders.Clear();
             while (_queue.Count > 0)
             {
-                IFolder currDir = _queue.Dequeue();
+                LocalFolder currDir = (LocalFolder)_queue.Dequeue();
                 Folders.Add(currDir.Id, currDir);
                 foreach (var toInsert in currDir.SubDirsLocalFolder())
                     _queue.Enqueue(toInsert);
             }
+        }
+
+        public override IEnumerable<IFile> GetFiles(IFolder folder)
+        {
+            return ((LocalFolder)folder).EnumerateFiles();
         }
 
         /// <summary>

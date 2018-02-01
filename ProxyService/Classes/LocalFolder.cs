@@ -1,4 +1,5 @@
-﻿using ProxyService.Interfaces;
+﻿using Newtonsoft.Json;
+using ProxyService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,5 +38,10 @@ namespace ProxyService.Classes
         public string LocalName { get; private set; }
 
         public string AbsoluteName { get; private set; }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }
