@@ -5,13 +5,14 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace ProxyService.Classes
 {
     public class BackgroundDistributor : IJob
     {
-        private PoolItemContext _poolContext;
-        private FolderRecordContext _folderContext;
+        private readonly PoolItemContext _poolContext;
+        private readonly FolderRecordContext _folderContext;
 
         public BackgroundDistributor(PoolItemContext poolContext, FolderRecordContext folderContext)
         {
@@ -23,7 +24,7 @@ namespace ProxyService.Classes
         {
             for (int i = 0; i < _folderContext.Folders.Count(); i++)
             {
-                bool success = await TryProcessOneItem(_folderContext.Folders.ElementAt<FolderRecord>(i));
+                bool success = await TryProcessOneItem(_folderContext.Folders.ElementAt(i));
                 if (success)
                 { }
                 else { }
@@ -42,7 +43,8 @@ namespace ProxyService.Classes
                 using (HttpClient httpClient = new HttpClient())
                 {
                     httpClient.Timeout = TimeSpan.FromSeconds(20);
-                    var response = await httpClient.PostAsync(address, null, cts.Token);
+                    var response = await httpClient.PostAsync(address,
+                        new StringContent(JsonConvert.SerializeObject(record)), cts.Token);
                     // Handle response then
 
                     //... And save context!!!!
@@ -71,7 +73,7 @@ namespace ProxyService.Classes
 
         private async Task<string> ReserveAvailableScannerAsync()
         {
-            var scanner = _poolContext.PoolItems.Where(x => !x.IsBusy).FirstOrDefault();
+            var scanner = _poolContext.PoolItems.FirstOrDefault(x => !x.IsBusy);
             if (scanner == null)
                 return null;
 

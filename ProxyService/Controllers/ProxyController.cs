@@ -80,8 +80,7 @@ namespace ProxyService.Controllers
                 return StatusCode(500, new { message = "Unhandled exception during processing. Try again later." });
 
             IRecoveryManager recoveryManager = new SqliteRecoveryManager(_taskContext);
-
-            var dist = new BackgroundDistributor(_poolContext, _folderContext);
+            JobManager.AddJob(new BackgroundDistributor(_poolContext, _folderContext), s => s.ToRunNow());
 
             return writeResult && recoveryManager.SetProperty(PropertySelector.FolderStructureCreated, token, true) ?
                 Ok() : StatusCode(500);

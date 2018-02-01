@@ -27,21 +27,16 @@ namespace ScannerService.Controllers
                                   ?? throw new ArgumentException("Accumulator address in not valid");
         }
 
-        public class ScannerEntryData : ProxyService.Controllers.ProxyController.EntryProxyData
-        {
-            public string Token { get; set; }
-        }
-
         [HttpPost("Scan")]
-        public async Task<JsonResult> Scan([FromBody]ScannerEntryData request)
+        public async Task<JsonResult> Scan([FromBody]FolderRecord request)
         {
             if (request == null)
                 return Json(new { IsSuccess = false, ErrorMessage = "Invalid request parameters" });
-            if (!request.List.Any())
+            if (string.IsNullOrEmpty(request.Path))
                 return Json(new { IsSuccess = false, ErrorMessage = "Nothing to scan" });
 
             IFolderScanner scanner = new LocalFolderScanner();
-            IEnumerable<IFile> files = scanner.GetFiles(new LocalFolder(request.List.First()));
+            IEnumerable<IFile> files = scanner.GetFiles(new LocalFolder(request.Path));
             ICollection<IExtension> extensions = FilesToExtensionsAdapter.FilesToExtensions(files);
 
             var response = await _httpClient.PostAsync(_accumulatorAddress, new StringContent(JsonConvert.SerializeObject(extensions), Encoding.UTF8));
