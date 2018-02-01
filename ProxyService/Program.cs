@@ -27,6 +27,8 @@ namespace ProxyService
                 logging.AddConsole();
                 logging.AddDebug();
             })
+                //.UseDefaultServiceProvider(options =>
+                  //  options.ValidateScopes = false)
                 .UseStartup<Startup>()
                 .Build();
     }

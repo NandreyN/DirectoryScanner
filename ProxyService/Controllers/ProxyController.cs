@@ -14,9 +14,12 @@ using ProxyService.Interfaces;
 using System.Data.SqlClient;
 using System.Data;
 using System.Net;
+using System.Threading;
 using Newtonsoft.Json;
 using Hangfire;
 using FluentScheduler;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ProxyService.Controllers
 {
@@ -24,11 +27,12 @@ namespace ProxyService.Controllers
     [Route("api/[controller]")]
     public class ProxyController : Controller
     {
-        private Queue<PoolItem> _poolAddresses;
-        private PoolItemContext _poolContext;
-        private TaskItemContext _taskContext;
-        private ITokenProvider _tokenProvider;
-        private FolderRecordContext _folderContext;
+        private readonly Queue<PoolItem> _poolAddresses;
+        private readonly PoolItemContext _poolContext;
+        private readonly TaskItemContext _taskContext;
+        private readonly ITokenProvider _tokenProvider;
+        private readonly FolderRecordContext _folderContext;
+        private readonly IHostedService _backgroundDistributor;
 
         public class EntryProxyData
         {
@@ -48,8 +52,9 @@ namespace ProxyService.Controllers
             }
         }
 
-        public ProxyController(IConfiguration config, PoolItemContext context, TaskItemContext taskContext, FolderRecordContext folderContext)
+        public ProxyController(IServiceProvider provider, IConfiguration config, PoolItemContext context, TaskItemContext taskContext, FolderRecordContext folderContext)
         {
+            //_backgroundDistributor = provider.CreateScope().ServiceProvider.GetRequiredService<BackgroundDistributor>();
             _poolContext = context;
             _taskContext = taskContext;
             _tokenProvider = new JWTTokenProvider(_taskContext, config);
@@ -80,7 +85,8 @@ namespace ProxyService.Controllers
                 return StatusCode(500, new { message = "Unhandled exception during processing. Try again later." });
 
             IRecoveryManager recoveryManager = new SqliteRecoveryManager(_taskContext);
-            JobManager.AddJob(new BackgroundDistributor(_poolContext, _folderContext), s => s.ToRunNow());
+            //JobManager.AddJob(new BackgroundDistributor(_poolContext, _folderContext), s => s.ToRunNow());
+            //await _backgroundDistributor.StartAsync(new CancellationToken(canceled: false));
 
             return writeResult && recoveryManager.SetProperty(PropertySelector.FolderStructureCreated, token, true) ?
                 Ok() : StatusCode(500);
