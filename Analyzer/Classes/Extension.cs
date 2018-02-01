@@ -3,13 +3,12 @@ using ScannerService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Scanner1Service.Classes
 {
     public class Extension : IExtension
     {
-        private const int EXAMPLES_COUNT = 2;
+        private const int ExamplesCount = 2;
 
         [JsonProperty]
         public string Name { get; private set; }
@@ -47,8 +46,9 @@ namespace Scanner1Service.Classes
                 SizeBytes = ext.SizeBytes;
                 Examples = ext.Examples;
             }
-            catch (JsonSerializationException)
-            { throw; }
+            catch (JsonException)
+            {
+            }
         }
 
         public void Union(IExtension extension)
@@ -59,25 +59,21 @@ namespace Scanner1Service.Classes
                 throw new ArgumentException("Parameter is not valid");
 
 
-            try
+            int newCount = checked(Count + extension.Count);
+            long newSize = checked(SizeBytes + extension.SizeBytes);
+
+            Count = newCount;
+            SizeBytes = newSize;
+
+            if (Examples.Count <= ExamplesCount && extension.Examples.Any())
             {
-                int newCount = checked(Count + extension.Count);
-                long newSize = checked(SizeBytes + extension.SizeBytes);
-
-                Count = newCount;
-                SizeBytes = newSize;
-
-                if (Examples.Count <= EXAMPLES_COUNT && extension.Examples.Any())
+                int i = 0;
+                while (Examples.Count <= ExamplesCount && i < extension.Examples.Count)
                 {
-                    int i = 0;
-                    while (Examples.Count <= EXAMPLES_COUNT && i < extension.Examples.Count)
-                    {
-                        Examples.Add(extension.Examples.ElementAt(i++));
-                    }
+                    Examples.Add(extension.Examples.ElementAt(i++));
                 }
             }
-            catch (OverflowException)
-            { throw; }
+
         }
 
         public override string ToString() => JsonConvert.SerializeObject(this);
@@ -85,5 +81,6 @@ namespace Scanner1Service.Classes
         private static bool IsValid(IExtension ex) => !string.IsNullOrEmpty(ex.Name) && ex.Count > 0 && ex.SizeBytes > 0;
         private bool IsValid(string name, int count, long bytes) =>
             !string.IsNullOrEmpty(name) && count > 0 && bytes > 0;
+
     }
 }

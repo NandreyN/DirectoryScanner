@@ -34,7 +34,7 @@ namespace ProxyService.Classes
 
         public string Extension { get; private set; }
 
-        public double SizeBytes { get; private set; }
+        public long SizeBytes { get; private set; }
 
         public override string ToString()
         {
