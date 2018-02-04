@@ -78,9 +78,9 @@ namespace Scanner1Service.Classes
 
         public override string ToString() => JsonConvert.SerializeObject(this);
 
-        private static bool IsValid(IExtension ex) => !string.IsNullOrEmpty(ex.Name) && ex.Count > 0 && ex.SizeBytes > 0;
+        private static bool IsValid(IExtension ex) => !string.IsNullOrEmpty(ex.Name) && ex.Count > 0 && ex.SizeBytes >= 0;
         private bool IsValid(string name, int count, long bytes) =>
-            !string.IsNullOrEmpty(name) && count > 0 && bytes > 0;
+            !string.IsNullOrEmpty(name) && count > 0 && bytes >= 0;
 
     }
 }

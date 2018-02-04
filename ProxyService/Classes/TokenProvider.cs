@@ -70,5 +70,10 @@ namespace ProxyService.Classes
             await _taskContext.SaveChangesAsync();
             return true;
         }
+
+        public static string ProvideInnerToken()
+        {
+            return Guid.NewGuid().ToString();
+        }
     }
 }

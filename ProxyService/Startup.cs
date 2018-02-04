@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
+using FluentScheduler;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -25,20 +27,17 @@ namespace ProxyService
         {
             services.AddSingleton(Configuration);
 
+            FolderRecordContext.ConnectionString = TaskItemContext.ConnectionString =
+                PoolItemContext.ConnectionString = Configuration.GetConnectionString("Default");
+
             services.AddDbContext<PoolItemContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
             services.AddDbContext<TaskItemContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
             services.AddDbContext<FolderRecordContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
 
-            services.AddSingleton<IHostedService, BackgroundDistributor>();
+            JobManager.AddJob<BackgroundDistributor>(x => x.ToRunNow());
+            services.AddSingleton<HttpClient>();
 
             services.AddMvc();
-            FolderRecordContext.ConnectionString = TaskItemContext.ConnectionString =
-            PoolItemContext.ConnectionString = Configuration.GetConnectionString("Default");
-
-
-            /*services.AddDbContext <FolderRecordContext>();
-            services.AddDbContext<TaskItemContext>();
-            services.AddDbContext<PoolItemContext>();*/
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

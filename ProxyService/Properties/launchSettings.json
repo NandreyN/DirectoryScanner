@@ -3,11 +3,11 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iis": {
-      "applicationUrl": "http://localhost/ProxyService",
+      "applicationUrl": "http://localhost:80",
       "sslPort": 0
     },
     "iisExpress": {
-      "applicationUrl": "http://localhost:64335/",
+      "applicationUrl": "http://localhost:64336/",
       "sslPort": 0
     }
   },
@@ -20,8 +20,7 @@
       }
     },
     "ProxyService": {
-      "commandName": "Project",
-      "launchBrowser": true,
+      "commandName": "IIS",
       "launchUrl": "api/ping",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

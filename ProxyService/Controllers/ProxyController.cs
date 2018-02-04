@@ -1,24 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Collections;
 using ProxyService.Classes;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Data.Sqlite;
-using System.Transactions;
 using ProxyService.Interfaces;
-using System.Data.SqlClient;
-using System.Data;
-using System.Net;
-using System.Threading;
 using Newtonsoft.Json;
-using Hangfire;
-using FluentScheduler;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace ProxyService.Controllers
@@ -32,7 +20,6 @@ namespace ProxyService.Controllers
         private readonly TaskItemContext _taskContext;
         private readonly ITokenProvider _tokenProvider;
         private readonly FolderRecordContext _folderContext;
-        private readonly IHostedService _backgroundDistributor;
 
         public class EntryProxyData
         {
@@ -93,9 +80,9 @@ namespace ProxyService.Controllers
         }
 
         [HttpGet("Ping")]
-        public IActionResult Ping()
+        public JsonResult Ping()
         {
-            return Ok();
+            return Json("Ok");
         }
     }
 }

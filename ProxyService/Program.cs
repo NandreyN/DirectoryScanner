@@ -30,6 +30,7 @@ namespace ProxyService
                 //.UseDefaultServiceProvider(options =>
                   //  options.ValidateScopes = false)
                 .UseStartup<Startup>()
+                .UseIISIntegration()
                 .Build();
     }
 }

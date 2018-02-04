@@ -39,7 +39,7 @@ namespace ScannerService.Controllers
             IEnumerable<IFile> files = scanner.GetFiles(new LocalFolder(request.Path));
             ICollection<IExtension> extensions = FilesToExtensionsAdapter.FilesToExtensions(files);
 
-            var response = await _httpClient.PostAsync(_accumulatorAddress, new StringContent(JsonConvert.SerializeObject(extensions), Encoding.UTF8));
+            //var response = await _httpClient.PostAsync(_accumulatorAddress, new StringContent(JsonConvert.SerializeObject(extensions), Encoding.UTF8));
             return Json(null);
         }
     }

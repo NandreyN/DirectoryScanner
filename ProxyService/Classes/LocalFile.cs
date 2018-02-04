@@ -19,7 +19,7 @@ namespace ProxyService.Classes
 
             if (!File.Exists(info.FullName))
                 throw new IOException("File not exists");
-            if (!attrib.HasFlag(FileAttributes.Directory))
+            if (attrib.HasFlag(FileAttributes.Directory))
                 throw new IOException("Not a file");
 
             LocalName = info.Name;

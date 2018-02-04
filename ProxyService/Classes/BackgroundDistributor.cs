@@ -1,73 +1,113 @@
-﻿using FluentScheduler;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
+using FluentScheduler;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace ProxyService.Classes
 {
-    public class BackgroundDistributor : BackgroundService
+    public class BackgroundDistributor : IJob, IDisposable
     {
-        private readonly IServiceProvider _serviceProvider;
-        public BackgroundDistributor(IServiceProvider provider)
+        private const int RestartInterval = 5;
+        private readonly HttpClient _httpClient;
+        public BackgroundDistributor()
         {
-            _serviceProvider = provider;
+            _httpClient = new HttpClient();
         }
 
-        private async Task<int> ReserveAvailableScannerAsync(PoolItemContext context)
+        public async void Execute()
         {
-            var scanner = context.PoolItems.FirstOrDefault(x => !x.IsBusy);
-            if (scanner == null)
-                return -1;
-
-            scanner.IsBusy = true;
-            await context.SaveChangesAsync();
-            return scanner.Id;
-        }
-
-        private async Task ReleaseScannerAsync(PoolItemContext context, int id)
-        {
-            var item = context.PoolItems.First(x => x.Id == id);
-            item.IsBusy = false;
-            await context.SaveChangesAsync();
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-
-            while (!stoppingToken.IsCancellationRequested)
+            int totalFolderCount = 0;
+            do
             {
-                using (var foldersContext = new FolderRecordContext())
+                using (var folderContext = new FolderRecordContext())
                 {
-                    using (var poolItemContext = new PoolItemContext())
+                    totalFolderCount = folderContext.Folders.Count();
+                    if (totalFolderCount <= 0) continue;
+
+                    FolderRecord folder = folderContext.Folders.FirstOrDefault(x => !x.WasSent ||
+                                                                                    string.IsNullOrEmpty(x.InnerToken));
+                    if (folder == null)
+                        break; // All sent , but not deleted
+
+                    (var scannerId, var address) = await ReserveScanner();
+                    if (scannerId == -1)
                     {
-                        int total = foldersContext.Folders.Count();
-                        if (total <= 0)
-                        {
-                            Thread.Sleep(TimeSpan.FromSeconds(3));
-                            continue;
-                        }
-
-                        int availableId = await ReserveAvailableScannerAsync(poolItemContext);
-                        
-                        if (availableId == -1)
-                        {
-                            Thread.Sleep(TimeSpan.FromSeconds(1));
-                            continue;
-                        }
-                        //string address = poolItemContext.PoolItems.First(x => x.Id == availableId).Address ?? "";
-                        // stuff
-                        await ReleaseScannerAsync(poolItemContext,availableId);
+                        await Task.Delay(RestartInterval);
+                        continue;
                     }
-                }
-            }
 
-            await StopAsync(cancellationToken: stoppingToken);
+                    if (string.IsNullOrEmpty(folder.InnerToken))
+                        folder.InnerToken = JWTTokenProvider.ProvideInnerToken();
+
+                    IJob sendJob = new SendBlockJob(new List<FolderRecord> { folder }, address);
+                    Schedule s = new Schedule(sendJob.Execute).AndThen(async () =>
+                        await ReleaseScanner(scannerId));
+
+                    JobManager.AddJob(sendJob, (sc) => s.Execute());
+                    folderContext.Update(folder);
+                    await folderContext.SaveChangesAsync();
+                }
+            } while (totalFolderCount > 0);
+        }
+
+        private async Task<(int, string)> ReserveScanner()
+        {
+            using (var poolContext = new PoolItemContext())
+            {
+                var scanner = poolContext.PoolItems.FirstOrDefault(x => !x.IsBusy);
+                if (scanner == null)
+                {
+                    return (-1, string.Empty);
+                }
+
+                scanner.IsBusy = true;
+                try
+                {
+                    await poolContext.SaveChangesAsync();
+                }
+                catch (Exception e) when (e is DbUpdateConcurrencyException || e is DbUpdateException)
+                {
+                    return (-1, string.Empty);
+                }
+
+                return (scanner.Id, scanner.Address);
+            }
+        }
+
+        private async Task<bool> ReleaseScanner(int id)
+        {
+            using (var poolContext = new PoolItemContext())
+            {
+                var poolItem = poolContext.PoolItems.SingleOrDefault(x => x.Id == id);
+                if (poolItem == null)
+                    throw new ArgumentNullException($"Pool set was corrupted: {id} not exists");
+                poolItem.IsBusy = false;
+                try
+                {
+                    await poolContext.SaveChangesAsync();
+                }
+                catch (Exception e) when (e is DbUpdateConcurrencyException || e is DbUpdateException)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        public async void Dispose()
+        {
+            using (var poolContext = new PoolItemContext())
+            {
+                await poolContext.PoolItems.ForEachAsync(x => x.IsBusy = false);
+                await poolContext.SaveChangesAsync();
+            }
+            _httpClient.Dispose();
+            JobManager.AddJob<BackgroundDistributor>(x => x.ToRunOnceIn(RestartInterval).Seconds());
         }
     }
 }

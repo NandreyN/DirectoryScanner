@@ -14,8 +14,8 @@ namespace ProxyService.Classes
     public class LocalFolderScanner : DefaultFolderScanner
     {
         private Queue<IFolder> _queue;
-        public LocalFolderScanner() : base() => _queue = new Queue<IFolder>();
-        public LocalFolderScanner(IEnumerable<IFolder> collection) : base() => _queue = new Queue<IFolder>(collection);
+        public LocalFolderScanner() => _queue = new Queue<IFolder>();
+        public LocalFolderScanner(IEnumerable<IFolder> collection) => _queue = new Queue<IFolder>(collection);
 
         public override void CreateFolderStructure(IFolder folder)
         {
@@ -66,7 +66,7 @@ namespace ProxyService.Classes
                     }
 
                     IFolder fldr = Folders.Values.ElementAt(i);
-                    context.Folders.Add(new FolderRecord() { Path = fldr.AbsoluteName, Token = token, WasDelivered = false });
+                    context.Folders.Add(new FolderRecord() { Path = fldr.AbsoluteName, Token = token, WasDelivered = false,InnerToken = string.Empty});
                 }
                 await context.SaveChangesAsync();
                 return true;
