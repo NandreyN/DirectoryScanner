@@ -23,15 +23,28 @@ namespace ProxyService.Classes
 
         public async void Execute()
         {
-            string jsonRepresentation = JsonConvert.SerializeObject(_toSend.First());
-            var response = await _httpClient.PostAsync(_deliveryAddress,
-                new StringContent(jsonRepresentation, Encoding.UTF8, "application/json"));
-            // HttpResuestException
-            if (response.IsSuccessStatusCode)
+            string jsonRepresentation = JsonConvert.SerializeObject(_toSend);
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await _httpClient.PostAsync(_deliveryAddress,
+                    new StringContent(jsonRepresentation, Encoding.UTF8, "application/json"));
+            }
+            catch (HttpRequestException)
+            {
+                // exit without saving progress
+                return;
+            }
+
+            if (response?.IsSuccessStatusCode == true)
                 using (var context = new FolderRecordContext())
                 {
-                    _toSend.First().WasSent = true;
-                    context.Update(_toSend.First());
+                    foreach (var item in _toSend)
+                    {
+                        item.WasSent = true;
+                        context.Update(item);
+                    }
                     await context.SaveChangesAsync();
                 }
         }

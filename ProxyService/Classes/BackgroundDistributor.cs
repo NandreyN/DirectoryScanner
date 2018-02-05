@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -12,6 +10,8 @@ namespace ProxyService.Classes
     public class BackgroundDistributor : IJob, IDisposable
     {
         private const int RestartInterval = 5;
+        private const int BlockSize = 5;
+
         private readonly HttpClient _httpClient;
         public BackgroundDistributor()
         {
@@ -20,7 +20,7 @@ namespace ProxyService.Classes
 
         public async void Execute()
         {
-            int totalFolderCount = 0;
+            int totalFolderCount;
             do
             {
                 using (var folderContext = new FolderRecordContext())
@@ -28,9 +28,11 @@ namespace ProxyService.Classes
                     totalFolderCount = folderContext.Folders.Count();
                     if (totalFolderCount <= 0) continue;
 
-                    FolderRecord folder = folderContext.Folders.FirstOrDefault(x => !x.WasSent ||
-                                                                                    string.IsNullOrEmpty(x.InnerToken));
-                    if (folder == null)
+                    var records =
+                        folderContext.Folders.Where(x => !x.WasSent ||
+                                                         string.IsNullOrEmpty(x.InnerToken)).Take(BlockSize).ToList();
+
+                    if (!records.Any())
                         break; // All sent , but not deleted
 
                     (var scannerId, var address) = await ReserveScanner();
@@ -40,15 +42,21 @@ namespace ProxyService.Classes
                         continue;
                     }
 
-                    if (string.IsNullOrEmpty(folder.InnerToken))
-                        folder.InnerToken = JWTTokenProvider.ProvideInnerToken();
+                    foreach (var record in records)
+                    {
+                        if (string.IsNullOrEmpty(record.InnerToken))
+                            record.InnerToken = JWTTokenProvider.ProvideInnerToken();
+                    }
 
-                    IJob sendJob = new SendBlockJob(new List<FolderRecord> { folder }, address);
+                    IJob sendJob = new SendBlockJob(records, address);
                     Schedule s = new Schedule(sendJob.Execute).AndThen(async () =>
                         await ReleaseScanner(scannerId));
 
                     JobManager.AddJob(sendJob, (sc) => s.Execute());
-                    folderContext.Update(folder);
+
+                    foreach (var record in records)
+                        folderContext.Update(record);
+
                     await folderContext.SaveChangesAsync();
                 }
             } while (totalFolderCount > 0);

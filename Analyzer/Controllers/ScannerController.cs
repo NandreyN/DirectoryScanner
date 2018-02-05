@@ -28,15 +28,30 @@ namespace ScannerService.Controllers
         }
 
         [HttpPost("Scan")]
-        public async Task<JsonResult> Scan([FromBody]FolderRecord request)
+        public async Task<JsonResult> Scan([FromBody]IEnumerable<FolderRecord> r)
         {
-            if (request == null)
+            if (r == null)
                 return Json(new { IsSuccess = false, ErrorMessage = "Invalid request parameters" });
-            if (string.IsNullOrEmpty(request.Path))
-                return Json(new { IsSuccess = false, ErrorMessage = "Nothing to scan" });
+
+            IEnumerable<FolderRecord> requests = r.ToList();
+            
+            foreach (var request in requests)
+            {
+                if (string.IsNullOrEmpty(request.Path))
+                    return Json(new { IsSuccess = false, ErrorMessage = "Nothing to scan" });
+            }
 
             IFolderScanner scanner = new LocalFolderScanner();
-            IEnumerable<IFile> files = scanner.GetFiles(new LocalFolder(request.Path));
+            List<IFile> files = new List<IFile>();
+            foreach (var request in requests)
+            {
+                IEnumerable<IFile> newFiles = scanner.GetFiles(new LocalFolder(request.Path));
+                foreach (var newFile in newFiles)
+                {
+                    files.Add(newFile);
+                }
+            }
+            
             ICollection<IExtension> extensions = FilesToExtensionsAdapter.FilesToExtensions(files);
 
             //var response = await _httpClient.PostAsync(_accumulatorAddress, new StringContent(JsonConvert.SerializeObject(extensions), Encoding.UTF8));
